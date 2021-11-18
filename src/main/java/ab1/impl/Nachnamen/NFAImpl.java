@@ -142,7 +142,18 @@ public class NFAImpl implements NFA {
 
     @Override
     public Boolean accepts(String w) throws IllegalCharacterException {
-        return null;
+        if(alphabet.contains(w.charAt(0))) throw new IllegalCharacterException();
+        Set <Integer> nextStates = getNextStates(0, w.charAt(0));
+        for (int i = 1; i < w.length()-1; i++) {
+            if (alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
+            Iterator<Integer> itr = nextStates.iterator();
+            Set <Integer> newnextStates = new TreeSet<>();
+            while (newnextStates.isEmpty() && itr.hasNext()){
+                newnextStates = getNextStates(itr.next(), w.charAt(i));
+            }
+            nextStates = newnextStates;
+        }
+        return isAcceptingState(w.charAt(w.length() - 1));
     }
 
     @Override
