@@ -4,10 +4,7 @@ import ab1.DFA;
 import ab1.NFA;
 import ab1.exceptions.IllegalCharacterException;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class NFAImpl implements NFA {
     private int numStates;
@@ -150,22 +147,31 @@ public class NFAImpl implements NFA {
 
     @Override
     public Boolean acceptsNothing() {
-        return null;
+        return acceptingStates.isEmpty();
     }
 
     @Override
     public Boolean acceptsEpsilonOnly() {
-        return null;
+        return acceptingStates.size() == 1 && acceptingStates.contains(0);
     }
 
     @Override
     public Boolean acceptsEpsilon() {
-        return null;
+        for (int i = 0; i < transitions[numStates-1].length; i++) {
+            for (int j = 0; j < transitions[i][numStates-1].size(); j++) {
+                if (transitions[i][j].contains(null)) return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public boolean subSetOf(NFA b) {
-        return false;
+        List<Integer> listacceptingStates = new ArrayList<>(acceptingStates);
+        for (Integer listacceptingState : listacceptingStates) {
+            if (!b.getAcceptingStates().contains(listacceptingState)) return false;
+        }
+        return true;
     }
 
     @Override
