@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ab1.Ab1Tests" tests="1" skipped="0" failures="0" errors="0" timestamp="2021-11-17T18:19:57" hostname="JULIAS-NOTEBOOK" time="0.033">
+  <properties/>
+  <testcase name="myTest()" classname="ab1.Ab1Tests" time="0.033"/>
+  <system-out><![CDATA[Gesamtpunkte: 0
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
