@@ -47,7 +47,7 @@ public class NFAImpl implements NFA {
         if (s > numStates - 1 || s < 0) {
             throw new IllegalStateException("The state does not exist!");
         }
-        return true;
+        return acceptingStates.contains(s);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class NFAImpl implements NFA {
         }
         if (isAcceptingState(state)) {
             for (int i = 0; i < transitions[state].length; i++) {
-                if (transitions[state][i].contains(c)) {
+                if (transitions[state][i].contains(c) || transitions[state][i].contains(null)) {
                     nextStates.add(i);
                 }
             }
@@ -142,18 +142,38 @@ public class NFAImpl implements NFA {
 
     @Override
     public Boolean accepts(String w) throws IllegalCharacterException {
-        if(alphabet.contains(w.charAt(0))) throw new IllegalCharacterException();
-        Set <Integer> nextStates = getNextStates(0, w.charAt(0));
-        for (int i = 1; i < w.length()-1; i++) {
-            if (alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
-            Iterator<Integer> itr = nextStates.iterator();
-            Set <Integer> newnextStates = new TreeSet<>();
-            while (newnextStates.isEmpty() && itr.hasNext()){
-                newnextStates = getNextStates(itr.next(), w.charAt(i));
+        if (acceptingStates.size() == 0) return false;
+        if(w.length() == 0){
+            return isAcceptingState(0);
+        }else {
+            if (!alphabet.contains(w.charAt(0))) throw new IllegalCharacterException();
+
+            int anotherState = 0;
+            int state = 0;
+            int indexOfCharforAnotherState = 0;
+
+            List <Integer> nextStates = new ArrayList<>(getNextStates(0, w.charAt(0)));
+            if (nextStates.isEmpty()) return false;
+            for (int i = 1; i < w.length(); i++) {
+                if (!alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
+                if(nextStates.size() > 1){
+                    anotherState = nextStates.get(1);
+                    indexOfCharforAnotherState = i;
+                }
+                state = nextStates.get(0);
+                nextStates = new ArrayList<>(getNextStates(state, w.charAt(i)));
             }
-            nextStates = newnextStates;
+
+            if (!isAcceptingState(state) && anotherState != 0){
+                state = anotherState;
+                for (int i = indexOfCharforAnotherState; i < w.length(); i++) {
+                    if (!alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
+                    nextStates = new ArrayList<>(getNextStates(state, w.charAt(i)));
+                    state = nextStates.get(0);
+                }
+                return isAcceptingState(state);
+            }else return true;
         }
-        return isAcceptingState(w.charAt(w.length() - 1));
     }
 
     @Override
