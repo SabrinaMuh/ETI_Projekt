@@ -148,6 +148,7 @@ public class NFAImpl implements NFA {
         }else {
             if (!alphabet.contains(w.charAt(0))) throw new IllegalCharacterException();
 
+            boolean anotherStateTrue = false;
             int anotherState = 0;
             int state = 0;
             int indexOfCharforAnotherState = 0;
@@ -157,6 +158,7 @@ public class NFAImpl implements NFA {
             for (int i = 1; i < w.length(); i++) {
                 if (!alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
                 if(nextStates.size() > 1){
+                    anotherStateTrue = true;
                     anotherState = nextStates.get(1);
                     indexOfCharforAnotherState = i;
                 }
@@ -164,7 +166,7 @@ public class NFAImpl implements NFA {
                 nextStates = new ArrayList<>(getNextStates(state, w.charAt(i)));
             }
 
-            if (!isAcceptingState(state) && anotherState != 0){
+            if (!isAcceptingState(state) && anotherStateTrue){
                 state = anotherState;
                 for (int i = indexOfCharforAnotherState; i < w.length(); i++) {
                     if (!alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
@@ -183,7 +185,21 @@ public class NFAImpl implements NFA {
 
     @Override
     public Boolean acceptsEpsilonOnly() {
-        return acceptingStates.size() == 1 && acceptingStates.contains(0);
+        if (acceptingStates.size() != 1) return false;
+        if (!acceptingStates.contains(0)) return false;
+        List <Integer> accepting = new ArrayList<>(acceptingStates);
+        for (int i = 0; i < accepting.size(); i++) {
+            for (int j = 0; j < numStates; j++) {
+                if (transitions[accepting.get(i)][j].size() != 0) {
+                    for (int k = 0; i < numStates; i++) {
+                        for (int l = 0; j < numStates; j++) {
+                            if (!transitions[k][l].contains(null)) return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     @Override
@@ -193,7 +209,7 @@ public class NFAImpl implements NFA {
                 if (transitions[i][j].contains(null)) return true;
             }
         }
-        return false;
+        return acceptingStates.contains(0);
     }
 
     @Override
