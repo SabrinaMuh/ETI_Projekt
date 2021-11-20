@@ -87,11 +87,14 @@ public class NFAImpl implements NFA {
         if (!alphabet.contains(c) && c != null) {
             throw new IllegalCharacterException();
         }
-        if (isAcceptingState(state)) {
-            for (int i = 0; i < transitions[state].length; i++) {
-                if (transitions[state][i].contains(c) || transitions[state][i].contains(null)) {
-                    nextStates.add(i);
-                }
+        for (int i = 0; i < transitions[state].length; i++) {
+            if (transitions[state][i].contains(c)) {
+                nextStates.add(i);
+            }
+        }
+        for (int i = 0; i < transitions[state].length; i++) {
+            if(transitions[state][i].contains(null)){
+                nextStates.add(i);
             }
         }
         return nextStates;
@@ -168,15 +171,25 @@ public class NFAImpl implements NFA {
                 nextStates = new ArrayList<>(getNextStates(state, w.charAt(i)));
             }
 
+            if(!nextStates.isEmpty()) {
+                state = nextStates.get(0);
+                if (nextStates.size() > 1 && w.length()>1) {
+                    anotherStateTrue = true;
+                    anotherState = nextStates.get(1);
+                    indexOfCharforAnotherState = w.length() - 2;
+                }
+            }
+
             if (!isAcceptingState(state) && anotherStateTrue){
                 state = anotherState;
                 for (int i = indexOfCharforAnotherState; i < w.length(); i++) {
                     if (!alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
                     nextStates = new ArrayList<>(getNextStates(state, w.charAt(i)));
-                    state = nextStates.get(0);
+                    if (nextStates.isEmpty()) return false;
+                    if(!isAcceptingState(state)) state = nextStates.get(0);
                 }
                 return isAcceptingState(state);
-            }else return true;
+            }else return isAcceptingState(state);
         }
     }
 
