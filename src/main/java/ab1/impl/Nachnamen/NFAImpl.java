@@ -55,9 +55,10 @@ public class NFAImpl implements NFA {
         if (!alphabet.contains(c) && c != null) {
             throw new IllegalCharacterException();
         }
-        if (isAcceptingState(fromState) && isAcceptingState(toState)) {
-            transitions[fromState][toState].add(c);
+        if (fromState>numStates || toState>numStates || fromState < 0 || toState < 0){
+            throw new IllegalStateException();
         }
+        transitions[fromState][toState].add(c);
     }
 
     /* Beispiel fuers bessere Verstaendnis :
@@ -156,6 +157,7 @@ public class NFAImpl implements NFA {
             List <Integer> nextStates = new ArrayList<>(getNextStates(0, w.charAt(0)));
             if (nextStates.isEmpty()) return false;
             for (int i = 1; i < w.length(); i++) {
+                if (nextStates.isEmpty()) return false;
                 if (!alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
                 if(nextStates.size() > 1){
                     anotherStateTrue = true;
@@ -204,12 +206,12 @@ public class NFAImpl implements NFA {
 
     @Override
     public Boolean acceptsEpsilon() {
-        for (int i = 0; i < transitions[numStates-1].length; i++) {
-            for (int j = 0; j < transitions[i][numStates-1].size(); j++) {
-                if (transitions[i][j].contains(null)) return true;
+        for (int i = 0; i < numStates; i++) {
+            for (int j = 0; j < numStates; j++) {
+                if (transitions[i][j].contains(null)&&isAcceptingState(j)) return true;
             }
         }
-        return acceptingStates.contains(0);
+        return isAcceptingState(0);
     }
 
     @Override
