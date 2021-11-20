@@ -162,17 +162,20 @@ public class NFAImpl implements NFA {
             for (int i = 1; i < w.length(); i++) {
                 if (nextStates.isEmpty()) return false;
                 if (!alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
+
                 if(nextStates.size() > 1){
                     anotherStateTrue = true;
                     anotherState = nextStates.get(1);
                     indexOfCharforAnotherState = i;
                 }
+
                 state = nextStates.get(0);
                 nextStates = new ArrayList<>(getNextStates(state, w.charAt(i)));
             }
 
             if(!nextStates.isEmpty()) {
                 state = nextStates.get(0);
+
                 if (nextStates.size() > 1 && w.length()>1) {
                     anotherStateTrue = true;
                     anotherState = nextStates.get(1);
@@ -182,12 +185,14 @@ public class NFAImpl implements NFA {
 
             if (!isAcceptingState(state) && anotherStateTrue){
                 state = anotherState;
+
                 for (int i = indexOfCharforAnotherState; i < w.length(); i++) {
                     if (!alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
                     nextStates = new ArrayList<>(getNextStates(state, w.charAt(i)));
                     if (nextStates.isEmpty()) return false;
                     if(!isAcceptingState(state)) state = nextStates.get(0);
                 }
+                
                 return isAcceptingState(state);
             }else return isAcceptingState(state);
         }
