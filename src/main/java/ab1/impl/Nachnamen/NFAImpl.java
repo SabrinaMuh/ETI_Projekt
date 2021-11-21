@@ -187,7 +187,6 @@ public class NFAImpl implements NFA {
             }
 
             if (!isAcceptingState(nextstate) && anotherStateTrue){
-                //previousstate = nextstate;
                 nextstate = anotherState;
 
                 for (int i = indexOfCharforAnotherState; i < w.length(); i++) {
@@ -195,7 +194,8 @@ public class NFAImpl implements NFA {
                     previousstate = nextstate;
                     nextStates = new ArrayList<>(getNextStates(nextstate, w.charAt(i)));
                     if (nextStates.isEmpty()) return false;
-                    if(!isAcceptingState(nextstate)) nextstate = nextStates.get(0);
+                    if (isAcceptingState(nextstate)) return true;
+                    nextstate = nextStates.get(0);
                 }
 
                 return isAcceptingState(nextstate) && (transitions[previousstate][nextstate].contains(w.charAt(w.length()-1)) || transitions[previousstate][nextstate].contains(null));
