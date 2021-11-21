@@ -154,11 +154,13 @@ public class NFAImpl implements NFA {
 
             boolean anotherStateTrue = false;
             int anotherState = 0;
-            int state = 0;
+            int previousstate = 0;
+            int nextstate = 0;
             int indexOfCharforAnotherState = 0;
 
             List <Integer> nextStates = new ArrayList<>(getNextStates(0, w.charAt(0)));
-            if (nextStates.isEmpty()) return false;
+            if (nextStates.isEmpty() && this.acceptsEpsilonOnly())return false;
+
             for (int i = 1; i < w.length(); i++) {
                 if (nextStates.isEmpty()) return false;
                 if (!alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
@@ -168,13 +170,14 @@ public class NFAImpl implements NFA {
                     anotherState = nextStates.get(1);
                     indexOfCharforAnotherState = i;
                 }
-
-                state = nextStates.get(0);
-                nextStates = new ArrayList<>(getNextStates(state, w.charAt(i)));
+                previousstate = nextstate;
+                nextstate = nextStates.get(0);
+                nextStates = new ArrayList<>(getNextStates(nextstate, w.charAt(i)));
             }
 
             if(!nextStates.isEmpty()) {
-                state = nextStates.get(0);
+                previousstate = nextstate;
+                nextstate = nextStates.get(0);
 
                 if (nextStates.size() > 1 && w.length()>1) {
                     anotherStateTrue = true;
@@ -183,18 +186,20 @@ public class NFAImpl implements NFA {
                 }
             }
 
-            if (!isAcceptingState(state) && anotherStateTrue){
-                state = anotherState;
+            if (!isAcceptingState(nextstate) && anotherStateTrue){
+                //previousstate = nextstate;
+                nextstate = anotherState;
 
                 for (int i = indexOfCharforAnotherState; i < w.length(); i++) {
                     if (!alphabet.contains(w.charAt(i))) throw new IllegalCharacterException();
-                    nextStates = new ArrayList<>(getNextStates(state, w.charAt(i)));
+                    previousstate = nextstate;
+                    nextStates = new ArrayList<>(getNextStates(nextstate, w.charAt(i)));
                     if (nextStates.isEmpty()) return false;
-                    if(!isAcceptingState(state)) state = nextStates.get(0);
+                    if(!isAcceptingState(nextstate)) nextstate = nextStates.get(0);
                 }
-                
-                return isAcceptingState(state);
-            }else return isAcceptingState(state);
+
+                return isAcceptingState(nextstate) && (transitions[previousstate][nextstate].contains(w.charAt(w.length()-1)) || transitions[previousstate][nextstate].contains(null));
+            }else return isAcceptingState(nextstate) && (transitions[previousstate][nextstate].contains(w.charAt(w.length()-1)) || transitions[previousstate][nextstate].contains(null));
         }
     }
 
