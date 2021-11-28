@@ -262,52 +262,61 @@ public class NFAImpl implements NFA {
 
     @Override
     public NFA complement() {
+        DFA dfa = this.toDFA();
+        //Schon jetzt in eine NFA umwandeln, damit die setTransition Funktion von DFA nicht die vorhandenen Verbindungen umschreibt
         //numStates + 1, weil man sonst nicht richtig die Falle einbauen kann
-        NFAImpl nfa = new NFAImpl(numStates+1, alphabet, acceptingStates, initialState);
-        nfa.setTransitions(transitions);
-        DFA dfa = nfa.toDFA();
+        NFA nfa = new NFAImpl(dfa.getNumStates()+1, dfa.getAlphabet(), dfa.getAcceptingStates(), dfa.getInitialState());
 
-        //1) Falle
-        int trapstate = dfa.getNumStates() - 1;
-        int actualStates = 0;
-
+        //Befüllt nfa mit den Transitions von dfa
         for (int i = 0; i < dfa.getNumStates(); i++) {
             for (int j = 0; j < dfa.getNumStates(); j++) {
-                if (dfa.getTransitions()[i][j].size() != 0)actualStates++;
+                for (char c : nfa.getAlphabet()) {
+                    if (dfa.getTransitions()[i][j].size() > 0 && dfa.getTransitions()[i][j].contains(c)) nfa.setTransition(i, c, j);
+                }
             }
         }
 
-        if (actualStates==0) actualStates = dfa.getNumStates();
+        //1) Falle
+        int trapstate = nfa.getNumStates() - 1;
+        int actualStates = 0;
+
+        for (int i = 0; i < nfa.getNumStates(); i++) {
+            for (int j = 0; j < nfa.getNumStates(); j++) {
+                if (nfa.getTransitions()[i][j].size() > 0)actualStates++;
+            }
+        }
+
+        if (actualStates==0) actualStates = nfa.getNumStates();
 
         //Dann alle Zustände mit dem Fallenzustand verbinden
         //und es dürfen nur die Buchstaben eingelesen werden, die nicht zu einem gültigen Pfad führen
         for (int i = 0; i < actualStates; i++) {
             //nicht gültige Buchstaben sammeln
-            List<Character> notUsed = new ArrayList<>();
+            List<Character> used = new ArrayList<>();
             for (int j = 0; j < actualStates; j++) {
-                for (char c: dfa.getAlphabet()) {
-                    if(!dfa.getTransitions()[i][j].contains(c) && !notUsed.contains(c)) notUsed.add(c);
+                for (char c: nfa.getAlphabet()) {
+                    if(nfa.getTransitions()[i][j].contains(c)) used.add(c);
                 }
             }
-            for (char c: notUsed) {
-                dfa.setTransition(i, c, trapstate);
+            for (char c: nfa.getAlphabet()) {
+                if(!used.contains(c)) nfa.setTransition(i, c, trapstate);
             }
         }
 
         for (char c: dfa.getAlphabet()) {
-            dfa.setTransition(trapstate, c, trapstate);
+            nfa.setTransition(trapstate, c, trapstate);
         }
 
         //2) Umwandlung akzeptierende Zustände in nicht akzeptierende Zustände
         //Sammeln von nicht akzeptierbare Zustände
         Set <Integer> notAcceptingStates = new HashSet<>();
-        for (int i = 0; i < dfa.getNumStates(); i++) {
-            if(!dfa.getAcceptingStates().contains(i)) notAcceptingStates.add(i);
+        for (int i = 0; i < nfa.getNumStates(); i++) {
+            if(!nfa.getAcceptingStates().contains(i)) notAcceptingStates.add(i);
         }
 
-        NFAImpl complement_NFA = new NFAImpl(dfa.getNumStates(), dfa.getAlphabet(), notAcceptingStates, 0);
+        NFAImpl complement_NFA = new NFAImpl(nfa.getNumStates(), nfa.getAlphabet(), notAcceptingStates, 0);
 
-        complement_NFA.setTransitions(dfa.getTransitions());
+        complement_NFA.setTransitions(nfa.getTransitions());
 
         return complement_NFA;
     }

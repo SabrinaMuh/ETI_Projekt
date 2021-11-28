@@ -77,8 +77,8 @@ public class DFAImpl extends NFAImpl implements DFA {
         if (!isExistingState(fromState) || !isExistingState(toState)){
             throw new IllegalStateException();
         }
-        /*Set<Character>[][] transitions = getTransitions();
-        clearTransitions(fromState, c);*/
+        Set<Character>[][] transitions = getTransitions();
+        clearTransitions(fromState, c);
         transitions[fromState][toState].add(c);
     }
 }
