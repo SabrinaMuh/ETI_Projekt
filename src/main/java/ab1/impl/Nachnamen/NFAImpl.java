@@ -292,7 +292,7 @@ public class NFAImpl implements NFA {
         //Dann alle Zustände mit dem Fallenzustand verbinden
         //und es dürfen nur die Buchstaben eingelesen werden, die nicht zu einem gültigen Pfad führen
         for (int i = 0; i < actualStates; i++) {
-            //nicht gültige Buchstaben sammeln
+            //verwendete Buchstaben sammeln
             List<Character> used = new ArrayList<>();
             for (int j = 0; j < actualStates; j++) {
                 for (char c: nfa.getAlphabet()) {
@@ -314,6 +314,8 @@ public class NFAImpl implements NFA {
         for (int i = 0; i < nfa.getNumStates(); i++) {
             if(!nfa.getAcceptingStates().contains(i)) notAcceptingStates.add(i);
         }
+
+        notAcceptingStates.add(trapstate);
 
         NFAImpl complement_NFA = new NFAImpl(nfa.getNumStates(), nfa.getAlphabet(), notAcceptingStates, 0);
 
@@ -524,7 +526,8 @@ public class NFAImpl implements NFA {
                         l++;
                         list.add(toStateNode);
                     }
-                    dfa.setTransition(i, c, list.size() - 1);
+                    //Vermeidet bei n7 eine IllegalStateException
+                    if(list.size() <= dfa.getNumStates()) dfa.setTransition(i, c, list.size() - 1);
                 }
             }
         }
