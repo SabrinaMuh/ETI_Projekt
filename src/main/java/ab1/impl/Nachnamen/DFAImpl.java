@@ -15,6 +15,16 @@ public class DFAImpl extends NFAImpl implements DFA {
     }
 
     @Override
+    public void setNumStates(int numStates) {
+        super.setNumStates(numStates);
+    }
+
+    @Override
+    public void setAcceptingStates(Set<Integer> newAccStates) {
+        super.setAcceptingStates(newAccStates);;
+    }
+
+    @Override
     public void reset() {
         currentState = getInitialState();
     }

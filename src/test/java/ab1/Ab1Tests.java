@@ -78,10 +78,10 @@ public class Ab1Tests {
 
 	@Test
 	public void myTestNFAtoDFA() {
-		DFA dfa = n2.toDFA();
+		DFA dfa = n1.toDFA();
 		printFA(dfa);
-		printFA(n2);
-		System.out.println(dfa.equals(n2));
+		printFA(n1);
+		//System.out.println(dfa.equals(n2));
 	}
 
 	@Test
@@ -111,6 +111,13 @@ public class Ab1Tests {
 		NFA n = n7.kleeneStar();
 		printFA(n);
 		System.out.println(n.acceptsEpsilonOnly());
+	}
+
+	@Test
+	public void myTestPlus() {
+		NFA n = n1.plus();
+		//printFA(n);
+		System.out.println(n.acceptsNothing());
 	}
 
 	public void printFA(NFA a) {

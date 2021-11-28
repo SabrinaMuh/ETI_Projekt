@@ -223,7 +223,6 @@ public class NFAImpl implements NFA {
 
         //ausrechne akzeptierende Zustaende
         Set<Integer> concatAccStates = new HashSet<>();
-        concatAccStates.addAll(this.getAcceptingStates());
         for (int accState : a.getAcceptingStates()) {
             concatAccStates.add(accState + this.numStates);
         }
@@ -302,7 +301,7 @@ public class NFAImpl implements NFA {
         return concat(lStar);
     }
 
-    public DFA toDFA() {
+    public DFA toDFAOld() {
         LinkedList<Integer> toExplore = new LinkedList<>();     //here I will write the new "composed" nodes
         toExplore.add(0);   //I will explore 0 (initial node) at first
         int currentExplored = 0;  //I start with the first element (0)
@@ -366,6 +365,144 @@ public class NFAImpl implements NFA {
 
         return dfa;
     }
+/*
+    public DFA toDFA() {
+        //create DFA
+        DFAImpl dfa = new DFAImpl(this.numStates, alphabet, null, 0);
+        //write combinated states in the HashMap, otherwise we can't know which states are "hidden" inside
+        HashMap<Integer, Set<Integer>> hiddenStates = new HashMap<>();
+        Set<Integer> startSet = new HashSet<>();
+        startSet.add(0);
+        hiddenStates.put(0, startSet);     //0 in NFA corresponds 0 in DFA
+
+        Set<Integer> nextStates = new HashSet<>();
+        //accepting states of DFA
+        Set<Integer> accStates = new HashSet<>();
+        //till there is smt to explore, do
+        int hiddenStatesSize = hiddenStates.size();
+        for (int i = 0; i < hiddenStatesSize; i++) {
+            //for each character in alphabet search for a possible transitions
+            for (Character ch : alphabet) {
+                //get next states for each possible state
+                for (int state : hiddenStates.get(i)) {
+                    nextStates.addAll(getNextStates(state, ch));
+                }
+
+                System.out.println(nextStates.size());
+
+                if (!hiddenStates.containsValue(nextStates) && !nextStates.isEmpty()) {
+                    int pos = hiddenStatesSize;
+                    hiddenStates.put(pos, nextStates);
+                    hiddenStatesSize++;
+                }
+                //set new transition
+                if (!nextStates.isEmpty()) {
+                    dfa.setTransition(i, ch, hiddenStatesSize - 1);
+                }
+
+                nextStates.clear();
+            }
+        }
+
+        for (int i = 0; i < hiddenStates.size(); i++) {
+            for (int state : hiddenStates.get(i)) {
+                if (this.acceptingStates.contains(state)) {
+                    accStates.add(state);
+                }
+            }
+        }
+
+        dfa.setNumStates(hiddenStates.size());
+        dfa.setAcceptingStates(accStates);
+
+        return dfa;
+    }
+    */
+    public DFA toDFA() {
+
+        //copy starting state
+        //NFAImpl toDFA = this.copy();
+
+        //look where to go from state
+        //for each char in alphabet: generate a new Set<states> (state node) with all the states that are reached from the state
+        // (if null, go one step further), repeat this step till not null (for each state inside the state node)
+        //repeat for each state-node
+
+        DFAImpl dfa = new DFAImpl(this.numStates, alphabet,null,0); //NUMSTATES HAS TO BE CHANGED LATER
+
+        //Repeat until everything is finished
+
+        ArrayList<Set<Integer>> list = new ArrayList<>();
+        //add start state
+        Set<Integer> startSet = new HashSet<>();
+
+        startSet.add(initialState);
+        list.add(startSet);
+
+        Set<Integer> fromStateNode = new HashSet<>();
+
+        int l = list.size();
+        for(int i = 0; i < l; i++) {
+
+            //load in startNode
+            fromStateNode = list.get(i);
+
+            for (char c : alphabet) {
+                Set<Integer> toStateNode = new HashSet<>();
+
+                for (int y : fromStateNode) {
+                    for (int j : getNextStates(y, c)) {
+                        toStateNode.add(j);
+                    }
+
+                }
+
+                if(!toStateNode.isEmpty()) {
+                    if(!list.contains(toStateNode)){
+                        l++;
+                        list.add(toStateNode);
+                    }
+                    dfa.setTransition(i, c, list.size() - 1);
+                }
+            }
+        }
+//check for each of those new states if contains any accepting states
+        Set<Integer> newAcceptingStates = new HashSet<Integer>();
+        int idx = 0;
+        for(Set<Integer> set : list){
+            for(int i : set){
+                if(this.acceptingStates.contains(i)){
+                    newAcceptingStates.add(idx);
+                }
+
+            }
+            idx++;
+        }
+
+        dfa.setAcceptingStates(newAcceptingStates);
+
+
+        //dfa.numStates=(int)list.stream().count();
+        dfa.setNumStates(numStates);
+
+        //now we have essentially our DFA, problem being our states are still a "set"
+        //iterate through set of states, add a new state Set<"counter"> and duplicate all it's transitions (and check for accepting states)
+        //repeat for all states
+
+        //done (hopefully)
+
+        return dfa;
+    }
+
+
+    public void setNumStates(int numStates) {
+        this.numStates = numStates;
+    }
+
+    public void setAcceptingStates(Set<Integer> newAccStates) {
+        this.acceptingStates = newAccStates;
+    }
+
 
     @Override
     public Boolean accepts(String w) throws IllegalCharacterException {
@@ -402,7 +539,10 @@ public class NFAImpl implements NFA {
     public Boolean acceptsNothing() {
         //wenn wir keine akzeptierende Zustaende haben, dann akzeptiert Automat nichts
         if (acceptingStates.isEmpty()) return true;
-        Set<Integer> unreachable = getUnreachableStates();
+        Set<Integer> unreachable = getUnreachableStatesNew();
+        for (int i : unreachable) {
+            System.out.print(i + " ");
+        }
         //wenn wir keine unerreichbare Zustaende haben und die Menge der akzeptiernde Zustaende ist nicht leer, dann return false
         if (unreachable.isEmpty()) return false;
         //manchmal kann das sein, dass die akzeptierende Zustaende unerreichbar sind
@@ -439,7 +579,7 @@ public class NFAImpl implements NFA {
         if (acceptedEpsStates.size() == 0) return false;
 
         //neue Ueberpruefung
-        Set<Integer> unreachable = getUnreachableStates();
+        Set<Integer> unreachable = getUnreachableStatesNew();
         if (acceptingStates.size() > acceptedEpsStates.size()) {
             for (int state : acceptingStates) {
                 if (!acceptedEpsStates.contains(state) && !unreachable.contains(state)) return false;
@@ -449,7 +589,7 @@ public class NFAImpl implements NFA {
         //ueberpruefe, ob es irgendeinen anderen Weg gibt zu dem akzeptierenden Zustand zu kommen
         for (Integer state : acceptedEpsStates) {
             for (int i = 0; i < numStates; i++) {
-                if (transitions[i][state].size() > 0 && !transitions[i][state].contains(null) && !getUnreachableStates().contains(i)) return false;
+                if (transitions[i][state].size() > 0 && !transitions[i][state].contains(null) && !getUnreachableStatesNew().contains(i)) return false;
                 if (transitions[i][state].size() > 1) return false;
             }
         }
@@ -501,6 +641,36 @@ public class NFAImpl implements NFA {
             if (counter == numStates) return true;
         }
         return false;
+    }
+
+    public Set<Integer> getUnreachableStatesNew() {
+        Set<Integer> workingSet = new HashSet<>();
+        Set<Integer> reachable = new HashSet<>();
+        workingSet.add(0);
+
+        int workingSetSizeBefore;
+        do {
+            workingSetSizeBefore = workingSet.size();
+            reachable.addAll(workingSet);       //make a copy because of Concurent Modification Error
+            for (int state : reachable) {
+                for (char ch : alphabet) {
+                    workingSet.addAll(getNextDeterministicStates(state, ch));
+                    workingSet.addAll(getEpsilonStates(state));
+                }
+            }
+        } while (workingSetSizeBefore != workingSet.size());
+
+        Set<Integer> unreachable = new HashSet<>();
+
+        for (int i = 0; i < numStates; i++) {
+            if (workingSet.contains(i))
+                continue;
+            else {
+                unreachable.add(i);
+            }
+        }
+
+        return unreachable;
     }
 
     //kann Fehler beinhalten
@@ -559,7 +729,6 @@ public class NFAImpl implements NFA {
             for (int j = 0; j < transitions.length; j++) {
                 if (!transitions[i][j].equals(nfa.transitions[i][j])) return false;
             }
-
         }
         return numStates == nfa.numStates &&
                 initialState == nfa.initialState &&
