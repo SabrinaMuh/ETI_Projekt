@@ -278,6 +278,7 @@ public class NFAImpl implements NFA {
 
         //1) Falle
         int trapstate = nfa.getNumStates() - 1;
+        //actualStates, damit nicht Verbindungen zwischen der Falle und sinnlosen Knoten besteht (z.B.: wie bei NFA4 passieren kann)
         int actualStates = 0;
 
         for (int i = 0; i < nfa.getNumStates(); i++) {
