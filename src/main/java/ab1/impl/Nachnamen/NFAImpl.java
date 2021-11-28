@@ -11,7 +11,7 @@ public class NFAImpl implements NFA {
     private Set<Character> alphabet;
     private Set<Integer> acceptingStates;
     private int initialState;
-    private Set<Character>[][] transitions;
+    public Set<Character>[][] transitions;
 
     //constructor
     public NFAImpl(int numStates, Set<Character> alphabet, Set<Integer> acceptingStates, int initialState) {
@@ -256,9 +256,46 @@ public class NFAImpl implements NFA {
         return concatFA;
     }
 
+    public void setTransitions(Set<Character>[][] transitions){
+        this.transitions = transitions;
+    }
+
     @Override
     public NFA complement() {
-        return null;
+        //numStates + 1, weil man sonst nicht die Falle einbauen kann
+        NFA nfa = new NFAImpl(numStates+1, alphabet, acceptingStates, initialState);
+        DFA dfa = nfa.toDFA();
+
+        //1) Falle
+        int trapstate = dfa.getNumStates() - 1;
+
+        //Dann alle Zustände mit dem Fallenzustand verbinden
+        //und es dürfen nur die Buchstaben eingelesen werden, die nicht zu einem gültigen Pfad führen
+        for (int i = 0; i < dfa.getNumStates(); i++) {
+            //nicht gültige Buchstaben sammeln
+            List<Character> notUsed = new ArrayList<>();
+            for (char c: dfa.getAlphabet()) {
+                for (int j = 0; j < dfa.getNumStates(); j++) {
+                    if(!dfa.getTransitions()[i][j].contains(c)) notUsed.add(c);
+                }
+            }
+            for (char c: notUsed) {
+                dfa.setTransition(i, c, trapstate);
+            }
+        }
+
+        //2) Umwandlung akzeptierende Zustände in nicht akzeptierende Zustände
+        //Sammeln von nicht akzeptierbare Zustände
+        Set <Integer> notAcceptingStates = new HashSet<>();
+        for (int i = 0; i < dfa.getNumStates(); i++) {
+            if(!dfa.isAcceptingState(0)) notAcceptingStates.add(i);
+        }
+
+        NFAImpl complement_NFA = new NFAImpl(dfa.getNumStates(), dfa.getAlphabet(), notAcceptingStates, 0);
+
+        complement_NFA.setTransitions(dfa.getTransitions());
+
+        return complement_NFA;
     }
 
     @Override
@@ -301,6 +338,7 @@ public class NFAImpl implements NFA {
         return concat(lStar);
     }
 
+    //Ignorieren
     public DFA toDFAOld() {
         LinkedList<Integer> toExplore = new LinkedList<>();     //here I will write the new "composed" nodes
         toExplore.add(0);   //I will explore 0 (initial node) at first
