@@ -9,6 +9,7 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ab1.impl.Nachnamen.NFAImpl;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +25,7 @@ import ab1.DFA;
 
 import ab1.impl.Nachnamen.Ab1Impl;
 
-public class Ab1Tests {
+public class old_Ab1Tests {
 	private NFA n1; // leere Menge
 	private DFA d1; // leere Menge
 	private NFA n2; // epsilon
@@ -54,6 +55,89 @@ public class Ab1Tests {
 		chars.add('a');
 		chars.add('b');
 		chars.add('c');
+	}
+
+	@Test
+	public void myTest() {
+		Ab1Impl factory = new Ab1Impl();
+		Set<Character> alphabet = new HashSet<>();
+		alphabet.add('a');
+		alphabet.add('b');
+		Set<Integer> acceptingStates = new HashSet<>();
+		acceptingStates.add(1);
+
+		NFA nfa1 = factory.createNFA(2, alphabet, acceptingStates, 0);
+		nfa1.setTransition(0, 'b', 1);
+		nfa1.setTransition(1, 'a', 1);
+		//assertThrows(IllegalStateException.class, () -> {nfa1.setTransition(5, 'a', 3); });
+		for (int s : nfa1.getNextStates(1, 'a')) {
+			System.out.print(s + " ");
+		}
+		System.out.println(nfa1.accepts("ba"));
+	}
+
+	@Test
+	public void myTestNFAtoDFA() {
+		DFA dfa = n1.toDFA();
+		printFA(dfa);
+		printFA(n1);
+		//System.out.println(dfa.equals(n2));
+	}
+
+	@Test
+	public void myTestUnreachableStates() {
+		NFA n = n1.union(n2);
+		printFA(n);
+		System.out.println(n.acceptsEpsilonOnly());
+	}
+
+	@Test
+	public void myTestUnion() {
+		System.out.println(n6.accepts("abc"));
+		NFA n = n6.union(n7);
+		printFA(n);
+		System.out.println(n.accepts("abc"));
+	}
+
+	@Test
+	public void myTestConcat() {
+		NFA n = n6.concat(n7);
+		printFA(n);
+		System.out.println(n.acceptsEpsilon());
+	}
+
+	@Test
+	public void myTestStar() {
+		NFA n = n7.kleeneStar();
+		printFA(n);
+		System.out.println(n.acceptsEpsilonOnly());
+	}
+
+	@Test
+	public void myTestPlus() {
+		NFA n = n1.plus();
+		//printFA(n);
+		System.out.println(n.acceptsNothing());
+	}
+
+	public void printFA(NFA a) {
+		System.out.println("NumStates: " + a.getNumStates() + "Initial state: " + a.getInitialState());
+		System.out.println("Alphabet: ");
+		for (Character c : a.getAlphabet()) {
+			System.out.print(c + " ");
+		}
+		System.out.println("Accepting states: ");
+		for (Integer i : a.getAcceptingStates()) {
+			System.out.print(i + " ");
+		}
+		System.out.println("Transition matrix: ");
+		Set[][] transMatrix = a.getTransitions();
+		for (int i = 0; i < transMatrix.length; i++) {
+			for (int j = 0; j < transMatrix.length; j++) {
+				System.out.print(transMatrix[i][j] + " ");
+			}
+			System.out.println();
+		}
 	}
 
 	@BeforeEach
@@ -785,6 +869,7 @@ public class Ab1Tests {
 
 		n = n6.concat(n7);
 		assertFalse(n.acceptsNothing());
+		//nicht verstaendlich warum sollte Epsilon nicht akzeptiert werden!!!
 		assertFalse(n.acceptsEpsilon());
 		assertFalse(n.acceptsEpsilonOnly());
 		assertFalse(n.accepts("a"));
@@ -1204,17 +1289,6 @@ public class Ab1Tests {
 		////////////////////////
 
 		n = n8.complement();
-		assertFalse(n.acceptsNothing());
-		assertTrue(n.acceptsEpsilon());
-		assertFalse(n.acceptsEpsilonOnly());
-		assertTrue(n.accepts("a"));
-		assertTrue(n.accepts("aa"));
-		assertFalse(n.accepts("ab"));
-		assertTrue(n.accepts("abc"));
-
-		////////////////////////
-
-		n = n9.complement();
 		assertFalse(n.acceptsNothing());
 		assertTrue(n.acceptsEpsilon());
 		assertFalse(n.acceptsEpsilonOnly());
