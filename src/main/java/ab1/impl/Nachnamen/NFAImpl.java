@@ -262,21 +262,31 @@ public class NFAImpl implements NFA {
 
     @Override
     public NFA complement() {
-        //numStates + 1, weil man sonst nicht die Falle einbauen kann
-        NFA nfa = new NFAImpl(numStates+1, alphabet, acceptingStates, initialState);
+        //numStates + 1, weil man sonst nicht richtig die Falle einbauen kann
+        NFAImpl nfa = new NFAImpl(numStates+1, alphabet, acceptingStates, initialState);
+        nfa.setTransitions(transitions);
         DFA dfa = nfa.toDFA();
 
         //1) Falle
         int trapstate = dfa.getNumStates() - 1;
+        int actualStates = 0;
+
+        for (int i = 0; i < dfa.getNumStates(); i++) {
+            for (int j = 0; j < dfa.getNumStates(); j++) {
+                if (dfa.getTransitions()[i][j].size() != 0)actualStates++;
+            }
+        }
+
+        if (actualStates==0) actualStates = dfa.getNumStates();
 
         //Dann alle Zustände mit dem Fallenzustand verbinden
         //und es dürfen nur die Buchstaben eingelesen werden, die nicht zu einem gültigen Pfad führen
-        for (int i = 0; i < dfa.getNumStates(); i++) {
+        for (int i = 0; i < actualStates; i++) {
             //nicht gültige Buchstaben sammeln
             List<Character> notUsed = new ArrayList<>();
-            for (char c: dfa.getAlphabet()) {
-                for (int j = 0; j < dfa.getNumStates(); j++) {
-                    if(!dfa.getTransitions()[i][j].contains(c)) notUsed.add(c);
+            for (int j = 0; j < actualStates; j++) {
+                for (char c: dfa.getAlphabet()) {
+                    if(!dfa.getTransitions()[i][j].contains(c) && !notUsed.contains(c)) notUsed.add(c);
                 }
             }
             for (char c: notUsed) {
@@ -284,11 +294,15 @@ public class NFAImpl implements NFA {
             }
         }
 
+        for (char c: dfa.getAlphabet()) {
+            dfa.setTransition(trapstate, c, trapstate);
+        }
+
         //2) Umwandlung akzeptierende Zustände in nicht akzeptierende Zustände
         //Sammeln von nicht akzeptierbare Zustände
         Set <Integer> notAcceptingStates = new HashSet<>();
         for (int i = 0; i < dfa.getNumStates(); i++) {
-            if(!dfa.isAcceptingState(0)) notAcceptingStates.add(i);
+            if(!dfa.getAcceptingStates().contains(i)) notAcceptingStates.add(i);
         }
 
         NFAImpl complement_NFA = new NFAImpl(dfa.getNumStates(), dfa.getAlphabet(), notAcceptingStates, 0);
