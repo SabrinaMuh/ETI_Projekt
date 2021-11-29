@@ -278,24 +278,14 @@ public class NFAImpl implements NFA {
 
         //1) Falle
         int trapstate = nfa.getNumStates() - 1;
-        //actualStates, damit nicht Verbindungen zwischen der Falle und sinnlosen Knoten besteht (z.B.: wie bei NFA4 passieren kann)
-        int actualStates = 0;
-
-        for (int i = 0; i < nfa.getNumStates(); i++) {
-            for (int j = 0; j < nfa.getNumStates(); j++) {
-                if (nfa.getTransitions()[i][j].size() > 0)actualStates++;
-            }
-        }
-
-        if (actualStates==0) actualStates = nfa.getNumStates();
 
         //Dann alle Zustände mit dem Fallenzustand verbinden
         //und es dürfen nur die Buchstaben eingelesen werden, die nicht zu einem gültigen Pfad führen
-        for (int i = 0; i < actualStates; i++) {
+        for (int i = 0; i < nfa.getNumStates(); i++) {
             //verwendete Buchstaben sammeln
             List<Character> used = new ArrayList<>();
-            for (int j = 0; j < actualStates; j++) {
-                for (char c: nfa.getAlphabet()) {
+            for (char c: nfa.getAlphabet()) {
+                for (int j = 0; j < nfa.getNumStates(); j++) {
                     if(nfa.getTransitions()[i][j].contains(c)) used.add(c);
                 }
             }
@@ -315,7 +305,7 @@ public class NFAImpl implements NFA {
             if(!nfa.getAcceptingStates().contains(i)) notAcceptingStates.add(i);
         }
 
-        notAcceptingStates.add(trapstate);
+        if(!notAcceptingStates.contains(trapstate)) notAcceptingStates.add(trapstate);
 
         NFAImpl complement_NFA = new NFAImpl(nfa.getNumStates(), nfa.getAlphabet(), notAcceptingStates, 0);
 
