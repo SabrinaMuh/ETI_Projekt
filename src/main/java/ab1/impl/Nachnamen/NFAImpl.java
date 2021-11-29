@@ -204,8 +204,25 @@ public class NFAImpl implements NFA {
     }
 
     @Override
+    //L1 und L2 => Komplement(Komplement(L1) oder Komplement(L2))
     public NFA intersection(NFA a) {
-        return null;
+        if (!this.getAcceptingStates().isEmpty()) {
+            //1) Komplement von L1
+            NFA complement1 = this.complement();
+
+            //2) Komplement von L2
+            NFA complement2 = a.complement();
+
+            //TODO: Eine Lösung für das n4 Probleme finden (unereichbare Zustände löschen)
+
+            //3) Vereinigung von Komplement L1 und Komplement L2
+            NFA union = complement1.union(complement2);
+
+            NFA complement = union.complement();
+
+            //4) Komplement von dieser Vereinigung
+            return complement;
+        }else return this;
     }
 
     @Override
