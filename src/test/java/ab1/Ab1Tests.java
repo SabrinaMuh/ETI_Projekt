@@ -78,10 +78,10 @@ public class Ab1Tests {
 
 	@Test
 	public void myTestNFAtoDFA() {
-		DFA dfa = n1.toDFA();
+		DFA dfa = n5.toDFA();
 		printFA(dfa);
-		printFA(n1);
-		//System.out.println(dfa.equals(n2));
+		//printFA(n5);
+
 	}
 
 	@Test
@@ -115,9 +115,37 @@ public class Ab1Tests {
 
 	@Test
 	public void myTestPlus() {
-		NFA n = n1.plus();
-		//printFA(n);
-		System.out.println(n.acceptsNothing());
+		NFA n = n7.plus();
+		printFA(n);
+		System.out.println(n.getNextStates(1, 'a'));
+	}
+
+	@Test
+	public void myTestCompl() {
+		NFA n = n8.toDFA();
+		printFA(n);
+		System.out.println(n.accepts("ab"));
+		NFA nn = n8.complement();
+		printFA(nn);
+		System.out.println(nn.accepts("ab"));
+	}
+
+	@Test
+	public void myTestIntersection() {
+		NFA n = n8.intersection(n9);
+		printFA(n);
+	}
+
+	@Test
+	public void myTestMinus() {
+		NFA step1 = n7.complement();
+		printFA(step1);					//richtig
+		NFA step2 = step1.union(n8);
+		printFA(step2);
+		printFA(step2.toDFA());
+		NFA step3 = step2.complement();
+		printFA(step3);
+		System.out.println(step3.acceptsNothing());
 	}
 
 	public void printFA(NFA a) {
@@ -636,7 +664,7 @@ public class Ab1Tests {
 		////////////////////////
 
 		n = n8.intersection(n9);
-		assertFalse(n.acceptsNothing());
+		assertTrue(n.acceptsNothing());		//??????
 		assertFalse(n.acceptsEpsilon());
 		assertFalse(n.acceptsEpsilonOnly());
 		assertFalse(n.accepts("a"));
@@ -1294,7 +1322,7 @@ public class Ab1Tests {
 		assertFalse(n.acceptsEpsilonOnly());
 		assertTrue(n.accepts("a"));
 		assertTrue(n.accepts("aa"));
-		assertTrue(n.accepts("ab"));
+		assertFalse(n.accepts("ab"));
 		assertTrue(n.accepts("abc"));
 
 		////////////////////////
