@@ -1,4 +1,4 @@
-package ab1.impl.Nachnamen;
+package ab1.impl.LomonosovaMuhrerMalle;
 
 import java.util.Set;
 

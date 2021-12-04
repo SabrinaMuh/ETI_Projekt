@@ -1,4 +1,4 @@
-package ab1.impl.Nachnamen;
+package ab1.impl.LomonosovaMuhrerMalle;
 
 import ab1.DFA;
 import ab1.NFA;
@@ -209,7 +209,7 @@ public class NFAImpl implements NFA {
         return unionFA;
     }
 
-    //L1 complement in Vereinigung nit L2 complement
+    //L1 complement in Vereinigung mit L2 complement
     @Override
     public NFA intersection(NFA a) {
         if (!this.getAcceptingStates().isEmpty()) {
@@ -218,8 +218,6 @@ public class NFAImpl implements NFA {
 
             //2) Komplement von L2
             NFA complement2 = a.complement();
-
-            //TODO: Eine Lösung für das n4 Probleme finden (unereichbare Zustände löschen)
 
             //3) Vereinigung von Komplement L1 und Komplement L2
             NFA union = complement1.union(complement2);
@@ -350,9 +348,6 @@ public class NFAImpl implements NFA {
         for (int state: acceptingStates) {
             acceptingStatesNew.add(state + 1);
         }
-        for (int i : acceptingStatesNew) {
-            System.out.print(i + " ");
-        }
 
         //erstelle NFA
         NFA nfaStar = new NFAImpl(numStates + 1, alphabet, acceptingStatesNew, 0);
@@ -382,132 +377,8 @@ public class NFAImpl implements NFA {
         return concat(lStar);
     }
 
-    public DFA toDFAOld() {
-        LinkedList<Integer> toExplore = new LinkedList<>();     //here I will write the new "composed" nodes
-        toExplore.add(0);   //I will explore 0 (initial node) at first
-        int currentExplored = 0;  //I start with the first element (0)
-        //write combinated states in the HashMap, otherwise we can't know which states are "hidden" inside
-        HashMap<Integer, Set<Integer>> hiddenStates = new HashMap<>();
-
-        Set<Integer> startSet = new HashSet<>();
-        startSet.add(0);
-        hiddenStates.put(0, startSet);     //0 in NFA corresponds 0 in DFA
-
-        int numNewStates = 1;   //amount of the states in DFA
-        //accepting states of DFA
-        Set<Integer> accStates = new HashSet<>();
-        if (acceptingStates.contains(initialState)) {
-            accStates.add(initialState);
-        }
-        Set<Integer> nextStates = new HashSet<>();
-        //till there is smt to explore, do
-        while (currentExplored < toExplore.size()) {
-            //for each character in alphabet search for a possible transitions
-            for (Character ch : alphabet) {
-                //get next states for each possible state
-                for (int i = 0; i < hiddenStates.get(currentExplored).size(); i++) {
-                    nextStates.addAll(getNextStates(i, ch));   //get next states
-                }
-
-                if (!hiddenStates.containsValue(nextStates) && !nextStates.isEmpty()) {
-                    hiddenStates.put(numNewStates, nextStates);
-                    toExplore.add(numNewStates);    //add a new state to explore
-                    for (int state : nextStates) {
-                        if (this.acceptingStates.contains(state)) {
-                            accStates.add(numNewStates);
-                        }
-                    }
-                    numNewStates++;
-                }
-            }
-            currentExplored++;  //explore the next element
-        }
-        //create DFA
-        DFA dfa = new DFAImpl(numNewStates, alphabet, accStates, 0);
-        //now we have the number of states in the new DFA and we know, which states of NFA are "hidden" ind the states of DFA
-        //now we can fill in transtition matrix
-        for (int i = 0; i < hiddenStates.size(); i++) {
-            Set<Integer> tempSet = hiddenStates.get(i);
-            Set<Integer> tempSetNext = new HashSet<>();
-            for (Character ch : alphabet) {
-                for (int num : tempSet) {
-                    tempSetNext.addAll(getNextStates(num, ch));
-                }
-                    for (int key : hiddenStates.keySet()) {
-                        if (hiddenStates.get(key).equals(tempSetNext)) {
-                            dfa.setTransition(i, ch, key);
-                        }
-                    }
-
-                tempSetNext.clear();
-            }
-
-        }
-
-        return dfa;
-    }
-
-    /*
-    public DFA toDFA() {
-        //create DFA
-        DFAImpl dfa = new DFAImpl(this.numStates, alphabet, null, 0);
-        //write combinated states in the HashMap, otherwise we can't know which states are "hidden" inside
-        HashMap<Integer, Set<Integer>> hiddenStates = new HashMap<>();
-        Set<Integer> startSet = new HashSet<>();
-        startSet.add(0);
-        hiddenStates.put(0, startSet);     //0 in NFA corresponds 0 in DFA
-
-        Set<Integer> nextStates = new HashSet<>();
-        //accepting states of DFA
-        Set<Integer> accStates = new HashSet<>();
-        //till there is smt to explore, do
-        int hiddenStatesSize = hiddenStates.size();
-        for (int i = 0; i < hiddenStatesSize; i++) {
-            //for each character in alphabet search for a possible transitions
-            for (Character ch : alphabet) {
-                //get next states for each possible state
-                for (int state : hiddenStates.get(i)) {
-                    nextStates.addAll(getNextStates(state, ch));
-                }
-
-                System.out.println(nextStates.size());
-
-                if (!hiddenStates.containsValue(nextStates) && !nextStates.isEmpty()) {
-                    int pos = hiddenStatesSize;
-                    Set<Integer> copy = new HashSet<>(nextStates);
-                    hiddenStates.put(pos, copy);
-                    hiddenStatesSize++;
-                }
-                //set new transition
-                if (!nextStates.isEmpty()) {
-                    dfa.setTransition(i, ch, hiddenStates.size() - 1);
-                }
-
-                nextStates.clear();
-            }
-        }
-
-        for (int i = 0; i < hiddenStates.size(); i++) {
-            for (int state : hiddenStates.get(i)) {
-                if (this.acceptingStates.contains(state)) {
-                    accStates.add(state);
-                }
-            }
-        }
-
-        dfa.setNumStates(hiddenStates.size());
-        dfa.setAcceptingStates(accStates);
-
-        return dfa;
-    }
-    */
-
     public DFA toDFA() {
 
-        //copy starting state
-        //NFAImpl toDFA = this.copy();
-
-        //look where to go from state
         //for each char in alphabet: generate a new Set<states> (state node) with all the states that are reached from the state
         // (if null, go one step further), repeat this step till not null (for each state inside the state node)
         //repeat for each state-node
@@ -517,6 +388,7 @@ public class NFAImpl implements NFA {
         //Repeat until everything is finished
 
         ArrayList<Set<Integer>> list = new ArrayList<>();
+
         //add start state
         Set<Integer> startSet = new HashSet<>();
 
@@ -544,33 +416,39 @@ public class NFAImpl implements NFA {
                         l++;
                         list.add(toStateNode);
                     }
+
                     //Vermeidet bei n7 eine IllegalStateException
-                    if(list.size() <= dfa.getNumStates()) dfa.setTransition(list.indexOf(fromStateNode), c, list.indexOf(toStateNode));
-                    //dfa.setTransition(list.indexOf(fromStateNode), c, list.indexOf(toStateNode));
+                    if (list.size() <= dfa.getNumStates())
+                        dfa.setTransition(list.indexOf(fromStateNode), c, list.indexOf(toStateNode));
+                    else {
+                        Set<Character>[][] dfaTrans = dfa.getTransitions();
+                        int newNumStates = list.size();
+                        Set<Character>[][] newTrans = new HashSet[newNumStates][newNumStates];
+
+                        for (int ii = 0; ii < newNumStates; ii++) {
+                            for (int j = 0; j < newNumStates; j++) {
+                                newTrans[ii][j] = new HashSet<Character>();
+                            }
+                        }
+
+                        for (int k = 0; k < dfa.getNumStates(); k++) {
+                            for (int p = 0; p < dfa.getNumStates(); p++) {
+                                newTrans[k][p].addAll(dfaTrans[k][p]);
+                            }
+                        }
+
+                        dfa.setTransitions(newTrans);
+                        dfa.setNumStates(newNumStates);
+                        dfa.setTransition(list.indexOf(fromStateNode), c, list.indexOf(toStateNode));
+                    }
+
                 }
             }
 
         }
 
-        /*
-        //delete unneeded matrix fields
-        Set<Character> [][] newTrans = new Set[list.size()][list.size()];;
-        if (dfa.getTransitions().length > list.size()) {
-            Set<Character> [][] dfaTrans = dfa.getTransitions();
-            int diff = dfa.getTransitions().length - list.size();
 
-            for (int i = 0; i < list.size(); i++) {
-                for (int j = 0; j < list.size(); j++) {
-                    newTrans[i][j] = dfaTrans[i][j];
-                }
-            }
-        }
-
-        dfa.setTransitions(newTrans);
-        
-         */
-
-//check for each of those new states if contains any accepting states
+        //searching for accepting states
         Set<Integer> newAcceptingStates = new HashSet<Integer>();
         int idx = 0;
         for(Set<Integer> set : list){
@@ -585,15 +463,7 @@ public class NFAImpl implements NFA {
 
         dfa.setAcceptingStates(newAcceptingStates);
 
-
-        //dfa.numStates=(int)list.stream().count();
-        dfa.setNumStates(numStates);
-
-        //now we have essentially our DFA, problem being our states are still a "set"
-        //iterate through set of states, add a new state Set<"counter"> and duplicate all it's transitions (and check for accepting states)
-        //repeat for all states
-
-        //done (hopefully)
+        dfa.setNumStates(list.size());
 
         return dfa;
     }
@@ -638,15 +508,12 @@ public class NFAImpl implements NFA {
         return false;
     }
 
-    //kann Fehler beinhalten - bzw. kann die Methode Unreachable die Fehler beinhalten
     @Override
     public Boolean acceptsNothing() {
         //wenn wir keine akzeptierende Zustaende haben, dann akzeptiert Automat nichts
         if (acceptingStates.isEmpty()) return true;
         Set<Integer> unreachable = getUnreachableStatesNew();
-        for (int i : unreachable) {
-            System.out.print(i + " ");
-        }
+
         //wenn wir keine unerreichbare Zustaende haben und die Menge der akzeptiernde Zustaende ist nicht leer, dann return false
         if (unreachable.isEmpty()) return false;
         //manchmal kann das sein, dass die akzeptierende Zustaende unerreichbar sind
@@ -727,23 +594,8 @@ public class NFAImpl implements NFA {
 
     @Override
     public boolean subSetOf(NFA b) {
-        List<Integer> listacceptingStates = new ArrayList<>(acceptingStates);
-        for (Integer listacceptingState : listacceptingStates) {
-            if (!b.getAcceptingStates().contains(listacceptingState)) return false;
-        }
-        return true;
-    }
-
-    //die Methode ueberprueft, ob es unerreichbare Zustaende gibt, und gibt true oder false zurueck
-    public boolean unreachableStates() {
-        int counter = 0;
-        //wir starten mit 1, weil 0 immer erreichbar ist
-        for (int i = 1; i < numStates; i++) {
-            for (int j = 0; j < numStates; j++) {
-                if (transitions[j][i].isEmpty()) counter++;     //falls wir nicht zum Zustand kommen koennen, erhoehe den Counter
-            }
-            if (counter == numStates) return true;
-        }
+        NFA n = this.minus(b);
+        if (n.acceptsNothing()) return true;
         return false;
     }
 
@@ -784,67 +636,14 @@ public class NFAImpl implements NFA {
         return unreachable;
     }
 
-    //kann Fehler beinhalten
-    public Set<Integer> getUnreachableStates() {
-        Set<Integer> unreachable = new HashSet<>();
-        int counter = 0;
-        for (int i = 1; i < numStates; i++) {
-            for (int j = 0; j < numStates; j++) {
-                if (transitions[j][i].isEmpty()) counter++;     //falls wir nicht zum Zustand kommen koennen, erhoehe den Counter
-            }
-            if (counter == numStates) unreachable.add(i);
-            counter = 0;
-        }
-
-        if (unreachable.isEmpty()) return unreachable;
-
-        //////////////////////////////////////////////
-
-        Set<Integer> toProve = new HashSet<>();
-        int toProveSizeBefore;
-        int unreachableSizeBefore;
-        do {
-            toProveSizeBefore = toProve.size();
-            unreachableSizeBefore = unreachable.size();
-            for (int state : unreachable) {
-                for (int i = 1; i < numStates; i++) {
-                    if (transitions[state][i].size() != 0) toProve.add(i);
-                }
-            }
-
-            boolean foundNewWay = false;
-
-            for (int state : toProve) {
-                for (int i = 1; i < numStates; i++) {
-                    if (transitions[i][state].size() != 0 && !unreachable.contains(i)) {
-                        foundNewWay = true;
-                        toProve.add(i);
-                    }
-                }
-                if (!foundNewWay) unreachable.add(state);
-                foundNewWay = false;
-            }
-        } while(toProveSizeBefore != toProve.size() || unreachableSizeBefore != unreachable.size());
-        return unreachable;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null) return false;
         NFAImpl nfa = (NFAImpl) o;
         //compare transition matrix
-        if (transitions.length != nfa.transitions.length) return false;
-        if (transitions[0].length != nfa.transitions[0].length) return false;
-        for (int i = 0; i < transitions.length; i++) {
-            for (int j = 0; j < transitions.length; j++) {
-                if (!transitions[i][j].equals(nfa.transitions[i][j])) return false;
-            }
-        }
-        return numStates == nfa.numStates &&
-                initialState == nfa.initialState &&
-                Objects.equals(alphabet, nfa.alphabet) &&
-                Objects.equals(acceptingStates, nfa.acceptingStates);
+        if (this.subSetOf(nfa) && nfa.subSetOf(this)) return true;
+        return false;
 
     }
 

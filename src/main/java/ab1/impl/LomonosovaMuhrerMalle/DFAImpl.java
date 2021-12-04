@@ -1,4 +1,4 @@
-package ab1.impl.Nachnamen;
+package ab1.impl.LomonosovaMuhrerMalle;
 
 import ab1.DFA;
 import ab1.exceptions.IllegalCharacterException;
@@ -22,6 +22,10 @@ public class DFAImpl extends NFAImpl implements DFA {
     @Override
     public void setAcceptingStates(Set<Integer> newAccStates) {
         super.setAcceptingStates(newAccStates);;
+    }
+
+    public void setTransitionMatrix(Set<Integer> newTransMatrix) {
+
     }
 
     @Override
